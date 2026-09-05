@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#14532d">
+<title>PAULO | Gestor de Tarefas</title>
+<style>
+:root{
+  --bg:#eef2f6;
+  --panel:#ffffff;
+  --text:#17212b;
+  --muted:#667085;
+  --line:#d8dee7;
+  --green:#14532d;
+  --green-2:#166534;
+  --green-3:#22c55e;
+  --late:#dc2626;
+  --late-bg:#fff3f2;
+  --today:#f59e0b;
+  --today-bg:#fffbeb;
+  --next:#2563eb;
+  --next-bg:#eff6ff;
+  --done:#64748b;
+  --done-bg:#f8fafc;
+  --shadow:0 12px 34px rgba(15,23,42,.08);
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(34,197,94,.08), transparent 28%),
+    linear-gradient(180deg,#f8fafc 0%, #eef2f6 100%);
+  color:var(--text);
+}
+button,input,select,textarea{font:inherit}
+.app{max-width:1200px;margin:0 auto;padding:18px}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:18px;
+  margin-bottom:18px;
+}
+.hero{
+  flex:1;
+  background:linear-gradient(135deg, #103f28 0%, #166534 58%, #1f8a45 100%);
+  color:#fff;
+  border-radius:24px;
+  padding:20px 22px;
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+}
+.hero::after{
+  content:"";
+  position:absolute;
+  right:-40px;
+  top:-40px;
+  width:180px;height:180px;border-radius:50%;
+  background:rgba(255,255,255,.08);
+}
+.hero::before{
+  content:"";
+  position:absolute;
+  right:80px;
+  bottom:-46px;
+  width:130px;height:130px;border-radius:50%;
+  background:rgba(255,255,255,.06);
+}
+.kicker{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.14);backdrop-filter:blur(4px)
+}
+.kicker .dot{width:8px;height:8px;border-radius:50%;background:#86efac;display:inline-block}
+.hero h1{margin:14px 0 6px;font-size:30px;line-height:1.1;position:relative;z-index:1}
+.hero p{margin:0;max-width:760px;color:rgba(255,255,255,.9);line-height:1.5;position:relative;z-index:1}
+.toolbar{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-self:stretch;max-width:350px
+}
+button,.file-label{
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  padding:11px 14px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.18s ease;
+}
+button:hover,.file-label:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(15,23,42,.08)}
+button.primary{background:var(--green);border-color:var(--green);color:#fff}
+button.primary:hover{background:var(--green-2)}
+button.soft{background:#f8fafc}
+button.small{padding:8px 10px;font-size:12px;border-radius:10px}
+button.icon-btn{display:inline-flex;align-items:center;gap:8px}
+button.ghost-danger{color:#b42318;background:#fff5f5;border-color:#ffd6d6}
+.file-label{display:inline-flex;align-items:center;justify-content:center}
+input[type=file]{display:none}
+.metrics{
+  display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:12px;margin-bottom:18px
+}
+.metric{
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(255,255,255,.65);
+  backdrop-filter:blur(10px);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:var(--shadow);
+}
+.metric .mini{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.metric .ico{
+  width:34px;height:34px;border-radius:12px;display:grid;place-items:center;font-size:16px;font-weight:700
+}
+.metric span{display:block;color:var(--muted);font-size:12px;font-weight:700}
+.metric strong{display:block;font-size:28px;line-height:1.05}
+.metric.total .ico{background:#ecfdf3;color:#166534}
+.metric.late .ico{background:#fee4e2;color:#d92d20}
+.metric.today .ico{background:#fffaeb;color:#b54708}
+.metric.next .ico{background:#eff8ff;color:#175cd3}
+.metric.nodate .ico{background:#f2f4f7;color:#475467}
+.metric.done .ico{background:#f2f4f7;color:#475467}
+.panel{
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(255,255,255,.7);
+  backdrop-filter:blur(10px);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+  margin-bottom:18px;
+  overflow:hidden;
+}
+.panel-head{padding:18px 18px 14px;border-bottom:1px solid #eef2f7}
+.panel-title{display:flex;align-items:center;gap:12px}
+.panel-title .icon{
+  width:42px;height:42px;border-radius:14px;background:#ecfdf3;color:#166534;display:grid;place-items:center;font-size:20px
+}
+.panel-head h2{margin:0;font-size:20px}
+.panel-head p{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+.task-form{
+  padding:18px;
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr 1.1fr;
+  gap:12px;
+  align-items:end;
+}
+.field{min-width:0}
+.field label{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:800;color:#475467;margin-bottom:6px
+}
+.field label .miniicon{font-size:13px}
+textarea,input[type=date],input[type=time],input[type=text],select{
+  width:100%;
+  border:1px solid #d7dee7;
+  background:#fff;
+  color:var(--text);
+  padding:12px 13px;
+  border-radius:14px;
+  outline:none;
+  transition:.15s ease;
+}
+textarea:focus,input:focus,select:focus{border-color:#4ade80;box-shadow:0 0 0 4px rgba(34,197,94,.13)}
+textarea{min-height:88px;resize:vertical;padding-right:58px}
+.note-wrap{position:relative}
+.mic{
+  position:absolute;right:10px;bottom:10px;width:42px;height:42px;padding:0;border-radius:12px;font-size:18px
+}
+.mic.listening{background:#fff1f2;border-color:#fecdd3;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.05)}}
+.date-shortcuts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.date-shortcuts button{padding:7px 10px;font-size:12px;border-radius:10px;background:#f8fafc}
+.save-task{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:2px}
+.save-task .primary{min-width:210px;min-height:50px;font-size:15px;letter-spacing:.02em}
+.save-hint{color:var(--muted);font-size:12px}
+.notice{
+  margin:0 18px 18px;
+  padding:13px 14px;
+  border-radius:14px;
+  background:#fffbeb;
+  color:#92400e;
+  border:1px solid #fde68a;
+  font-size:12px;line-height:1.45
+}
+.filters{
+  display:grid;grid-template-columns:2fr repeat(3,1fr);gap:10px;padding:16px 18px 12px
+}
+.kanban{display:flex;flex-direction:column;gap:14px;padding:0 18px 18px}
+.column{
+  border-radius:20px;padding:14px;
+  border:1px solid #e6ebf2;
+}
+.column[hidden]{display:none!important}
+.column[data-col="late"]{background:var(--late-bg);border-color:#ffd7d5}
+.column[data-col="today"]{background:var(--today-bg);border-color:#fde7b0}
+.column[data-col="next"]{background:var(--next-bg);border-color:#cfe0ff}
+.column-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.column-label{display:flex;align-items:center;gap:10px;font-weight:900;font-size:16px}
+.column-label .bubble{
+  width:38px;height:38px;border-radius:14px;display:grid;place-items:center;font-size:18px;font-weight:800
+}
+.column[data-col="late"] .bubble{background:#fff;color:var(--late)}
+.column[data-col="today"] .bubble{background:#fff;color:var(--today)}
+.column[data-col="next"] .bubble{background:#fff;color:var(--next)}
+.column-sub{color:var(--muted);font-size:12px}
+.count{background:rgba(255,255,255,.78);padding:5px 10px;border-radius:999px;font-size:12px;font-weight:800}
+.board-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:12px}
+.card{
+  background:#fff;
+  border:1px solid #e3e8ef;
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 6px 18px rgba(15,23,42,.05);
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:"";
+  position:absolute;left:0;top:0;bottom:0;width:5px;background:#98a2b3
+}
+.card.high::before{background:#d92d20}
+.card.medium::before{background:#f79009}
+.card.low::before{background:#12b76a}
+.card.done{opacity:.78;background:#fbfcfd}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.pin{
+  width:34px;height:34px;border-radius:12px;background:#f8fafc;display:grid;place-items:center;font-size:16px;flex:0 0 auto
+}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 9px;border-radius:999px;font-size:11px;font-weight:800
+}
+.badge.priority-high{background:#fff1f2;color:#b42318}
+.badge.priority-medium{background:#fff7ed;color:#b54708}
+.badge.priority-low{background:#ecfdf3;color:#027a48}
+.badge.status{background:#f2f4f7;color:#475467}
+.card-title{font-size:16px;font-weight:900;line-height:1.35;white-space:pre-wrap;word-break:break-word;margin:0 0 10px}
+.card-grid{display:grid;gap:8px;margin-top:10px}
+.info-pill{
+  display:flex;align-items:center;gap:10px;
+  background:#f8fafc;border:1px solid #edf1f5;border-radius:12px;padding:10px 11px
+}
+.info-pill .i{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;background:#fff}
+.info-pill .txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.info-pill .txt small{font-size:11px;color:var(--muted);font-weight:700}
+.info-pill .txt strong{font-size:13px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.card-actions button{flex:1 1 110px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.empty{
+  text-align:center;color:#94a3b8;font-size:13px;padding:26px 10px;background:rgba(255,255,255,.58);
+  border:1px dashed #d5dde7;border-radius:16px
+}
+.archive-wrap{padding:0 18px 18px}
+.archive{border-top:1px solid #eef2f7;padding-top:14px}
+.archive summary{cursor:pointer;font-weight:800;color:#475467;padding:8px 0}
+.archive .board-cards{margin-top:10px}
+dialog{border:none;border-radius:22px;width:min(680px,calc(100% - 24px));box-shadow:0 24px 80px rgba(15,23,42,.24)}
+dialog::backdrop{background:rgba(15,23,42,.45)}
+.dialog-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.dialog-head .icon{width:42px;height:42px;border-radius:14px;background:#ecfdf3;color:#166534;display:grid;place-items:center;font-size:20px}
+.dialog-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dialog-grid .full{grid-column:1/-1}
+dialog label{display:block;font-size:12px;font-weight:800;color:#475467;margin-bottom:6px}
+dialog textarea{min-height:120px;padding-right:12px}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
+#toast{
+  position:fixed;right:18px;bottom:18px;max-width:min(420px,calc(100vw - 36px));
+  background:#101828;color:#fff;padding:13px 15px;border-radius:14px;opacity:0;transform:translateY(8px);
+  pointer-events:none;transition:.2s;z-index:120;box-shadow:0 14px 40px rgba(0,0,0,.18)
+}
+#toast.show{opacity:1;transform:translateY(0)}
+@media(max-width:1040px){
+  header{flex-direction:column}
+  .toolbar{justify-content:flex-start;max-width:none}
+  .metrics{grid-template-columns:repeat(3,1fr)}
+  .task-form{grid-template-columns:1fr 1fr 1fr}
+  .task-form .field:first-child{grid-column:1/-1}
+}
+@media(max-width:720px){
+  .filters{grid-template-columns:1fr 1fr}
+  .task-form{grid-template-columns:1fr 1fr}
+  .dialog-grid{grid-template-columns:1fr}
+  .dialog-grid .full{grid-column:auto}
+}
+@media(max-width:560px){
+  .app{padding:10px}
+  .hero{padding:18px;border-radius:20px}
+  .hero h1{font-size:24px}
+  .hero p{font-size:13px}
+  .toolbar{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .toolbar button,.toolbar .file-label{padding:10px;font-size:12px}
+  .metrics{grid-template-columns:1fr 1fr}
+  .metric strong{font-size:24px}
+  .task-form,.filters{display:block}
+  .task-form .field,.filters > *{margin-bottom:12px}
+  .save-task{display:block}
+  .save-task .primary{display:block;width:100%}
+  .save-hint{display:block;margin-top:8px;text-align:center}
+  .date-shortcuts button{flex:1}
+  .board-cards{grid-template-columns:1fr}
+  .card-actions{display:grid;grid-template-columns:1fr 1fr 1fr}
+  .card-actions button{flex:none}
+}
+@media print{
+  body{background:#fff}
+  .toolbar,.new-task,.filters,.card-actions,.notice{display:none!important}
+  .panel,.metric,.hero{box-shadow:none;background:#fff;border:1px solid #ddd}
+  .hero{color:#111}
+  .hero p{color:#444}
+  .column{page-break-inside:avoid;background:#fff!important;border:1px solid #ccc}
+  .archive-wrap{display:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="hero">
+      <div class="kicker"><span class="dot"></span> Organizador pessoal</div>
+      <h1>PAULO | Gestor de Tarefas</h1>
+      <p>Centralize compromissos, pendências e prioridades em um painel visual elegante, prático e pronto para operação no celular, tablet e notebook.</p>
+    </div>
+    <div class="toolbar">
+      <button id="backupBtn" class="icon-btn">💾 Exportar backup</button>
+      <label class="file-label" for="importFile">📥 Importar backup</label>
+      <input id="importFile" type="file" accept=".json,application/json">
+      <button id="csvBtn" class="icon-btn">📊 Exportar CSV</button>
+      <button id="printBtn" class="icon-btn">🖨️ Imprimir / PDF</button>
+    </div>
+  </header>
+
+  <section class="metrics">
+    <div class="metric total"><div class="mini"><span>Total abertas</span><div class="ico">📌</div></div><strong id="mOpen">0</strong></div>
+    <div class="metric late"><div class="mini"><span>Atrasadas</span><div class="ico">⏰</div></div><strong id="mLate">0</strong></div>
+    <div class="metric today"><div class="mini"><span>Para hoje</span><div class="ico">📅</div></div><strong id="mToday">0</strong></div>
+    <div class="metric next"><div class="mini"><span>Futuras</span><div class="ico">🚀</div></div><strong id="mNext">0</strong></div>
+    <div class="metric nodate"><div class="mini"><span>Sem prazo</span><div class="ico">🗂️</div></div><strong id="mNoDate">0</strong></div>
+    <div class="metric done"><div class="mini"><span>Concluídas</span><div class="ico">✅</div></div><strong id="mDone">0</strong></div>
+  </section>
+
+  <section class="panel new-task">
+    <div class="panel-head">
+      <div class="panel-title">
+        <div class="icon">✨</div>
+        <div>
+          <h2>Nova tarefa</h2>
+          <p>Cadastre uma tarefa com data, horário, prioridade e categoria. O quadro se reorganiza automaticamente.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="task-form">
+      <div class="field">
+        <label for="newText"><span class="miniicon">📝</span> Atividade</label>
+        <div class="note-wrap">
+          <textarea id="newText" placeholder="Ex.: Ligar para o Ivanildo"></textarea>
+          <button type="button" class="mic" id="newMic" title="Ditar atividade">🎙️</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="newDate"><span class="miniicon">📅</span> Data</label>
+        <input id="newDate" type="date">
+        <div class="date-shortcuts">
+          <button type="button" id="todayBtn">Hoje</button>
+          <button type="button" id="tomorrowBtn">Amanhã</button>
+          <button type="button" id="clearDateBtn">Sem data</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="newTime"><span class="miniicon">🕒</span> Horário</label>
+        <input id="newTime" type="time" step="300">
+      </div>
+
+      <div class="field">
+        <label for="newPriority"><span class="miniicon">🔥</span> Prioridade</label>
+        <select id="newPriority">
+          <option>Alta</option>
+          <option selected>Média</option>
+          <option>Baixa</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="newCategory"><span class="miniicon">🏷️</span> Categoria</label>
+        <input id="newCategory" type="text" placeholder="Ex.: Comercial">
+      </div>
+
+      <div class="save-task">
+        <button type="button" class="primary icon-btn" id="saveTaskBtn">✅ SALVAR TAREFA</button>
+        <span class="save-hint">Atalho no computador: <strong>Ctrl + Enter</strong></span>
+      </div>
+    </div>
+
+    <div class="notice" id="voiceNotice">🔒 Neste momento, os dados continuam sendo salvos neste navegador. A sincronização em nuvem será a próxima etapa do rollout.</div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div class="panel-title">
+        <div class="icon">🧭</div>
+        <div>
+          <h2>Quadro de pendências</h2>
+          <p>Atrasados ficam no topo. Se não houver atrasos, “Para hoje” assume a primeira posição. Cada cartão pode ser editado, concluído ou excluído diretamente no quadro.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <input id="search" type="text" placeholder="🔎 Pesquisar tarefa ou categoria...">
+      <select id="filterPriority">
+        <option value="">Todas as prioridades</option>
+        <option value="Alta">Alta</option>
+        <option value="Média">Média</option>
+        <option value="Baixa">Baixa</option>
+      </select>
+      <select id="filterCategory">
+        <option value="">Todas as categorias</option>
+      </select>
+      <select id="filterStatus">
+        <option value="">Abertas e concluídas</option>
+        <option value="open">Somente abertas</option>
+        <option value="done">Somente concluídas</option>
+      </select>
+    </div>
+
+    <div class="kanban" id="kanban">
+      <div class="column" data-col="late" id="boardLate">
+        <div class="column-head">
+          <div>
+            <div class="column-label"><span class="bubble">⏰</span> Atrasados</div>
+            <div class="column-sub">Itens vencidos que demandam ação imediata.</div>
+          </div>
+          <span class="count" id="cLate">0</span>
+        </div>
+        <div id="colLate" class="board-cards"></div>
+      </div>
+
+      <div class="column" data-col="today" id="boardToday">
+        <div class="column-head">
+          <div>
+            <div class="column-label"><span class="bubble">📅</span> Para hoje</div>
+            <div class="column-sub">Prioridades do dia e compromissos em execução.</div>
+          </div>
+          <span class="count" id="cToday">0</span>
+        </div>
+        <div id="colToday" class="board-cards"></div>
+      </div>
+
+      <div class="column" data-col="next" id="boardNext">
+        <div class="column-head">
+          <div>
+            <div class="column-label"><span class="bubble">🚀</span> Futuros</div>
+            <div class="column-sub">Pendências agendadas para os próximos dias.</div>
+          </div>
+          <span class="count" id="cNext">0</span>
+        </div>
+        <div id="colNext" class="board-cards"></div>
+      </div>
+    </div>
+
+    <div class="archive-wrap">
+      <details class="archive">
+        <summary>✅ Histórico de concluídas (<span id="cDone">0</span>)</summary>
+        <div id="colDone" class="board-cards"></div>
+      </details>
+    </div>
+  </section>
+</div>
+
+<dialog id="editDialog">
+  <form method="dialog" id="editForm">
+    <div class="dialog-head">
+      <div class="icon">✏️</div>
+      <div>
+        <h2 style="margin:0">Editar tarefa</h2>
+        <div style="color:#667085;font-size:13px;margin-top:4px">Ajuste descrição, data, horário, prioridade, categoria e status.</div>
+      </div>
+    </div>
+    <input type="hidden" id="editId">
+    <div class="dialog-grid">
+      <div class="full">
+        <label for="editText">Atividade</label>
+        <textarea id="editText" required></textarea>
+      </div>
+      <div>
+        <label for="editDate">Data</label>
+        <input id="editDate" type="date">
+      </div>
+      <div>
+        <label for="editTime">Horário</label>
+        <input id="editTime" type="time" step="300">
+      </div>
+      <div>
+        <label for="editPriority">Prioridade</label>
+        <select id="editPriority">
+          <option>Alta</option>
+          <option>Média</option>
+          <option>Baixa</option>
+        </select>
+      </div>
+      <div>
+        <label for="editCategory">Categoria</label>
+        <input id="editCategory" type="text">
+      </div>
+      <div>
+        <label for="editStatus">Status</label>
+        <select id="editStatus">
+          <option value="open">Aberta</option>
+          <option value="done">Concluída</option>
+        </select>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="cancelEdit">Cancelar</button>
+      <button class="primary" type="submit">Salvar alterações</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'gestor_pendencias_local_v1';
+  let items = [];
+  let recognition = null;
+  const $ = id => document.getElementById(id);
+
+  function localDateISO(date = new Date()){
+    const y = date.getFullYear();
+    const m = String(date.getMonth()+1).padStart(2,'0');
+    const d = String(date.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  function tomorrowISO(){
+    const d = new Date();
+    d.setDate(d.getDate()+1);
+    return localDateISO(d);
+  }
+  function fmtDate(iso){
+    if(!iso) return 'Sem data';
+    const [y,m,d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  function nowISO(){ return new Date().toISOString(); }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+  function esc(s){
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  }
+  function toast(msg){
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(()=>t.classList.remove('show'), 2600);
+  }
+  function normalizeItem(x){
+    return {
+      id:x.id || uid(),
+      text:String(x.text || '').trim(),
+      due:/^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '',
+      dueTime:/^\d{2}:\d{2}$/.test(x.dueTime || '') ? x.dueTime : '',
+      priority:['Alta','Média','Baixa'].includes(x.priority) ? x.priority : 'Média',
+      category:String(x.category || 'Geral').trim() || 'Geral',
+      status:x.status === 'done' ? 'done' : 'open',
+      createdAt:x.createdAt || nowISO(),
+      completedAt:x.completedAt || ''
+    };
+  }
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }catch(e){
+      $('voiceNotice').innerHTML = '⚠️ <strong>Atenção:</strong> este navegador bloqueou o armazenamento local. Exporte um backup para não perder os dados.';
+    }
+  }
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      items = Array.isArray(parsed) ? parsed.map(normalizeItem).filter(x => x.text) : [];
+    }catch(e){
+      items = [];
+    }
+  }
+  function resetNewForm(){
+    $('newText').value = '';
+    $('newDate').value = localDateISO();
+    $('newTime').value = '';
+    $('newPriority').value = 'Média';
+    $('newCategory').value = '';
+    $('newText').focus();
+  }
+  function addTask(){
+    const text = $('newText').value.trim();
+    if(!text){
+      toast('Digite a atividade antes de salvar.');
+      $('newText').focus();
+      return;
+    }
+    items.unshift(normalizeItem({
+      id:uid(),
+      text,
+      due:$('newDate').value,
+      dueTime:$('newTime').value,
+      priority:$('newPriority').value,
+      category:$('newCategory').value.trim() || 'Geral',
+      status:'open',
+      createdAt:nowISO()
+    }));
+    save();
+    render();
+    const due = $('newDate').value;
+    const time = $('newTime').value;
+    const when = due ? `${fmtDate(due)}${time ? ' às '+time : ''}` : 'sem data';
+    resetNewForm();
+    toast(`Tarefa salva para ${when}.`);
+  }
+
+  $('saveTaskBtn').addEventListener('click', addTask);
+  $('newText').addEventListener('keydown', e => {
+    if(e.ctrlKey && e.key === 'Enter'){
+      e.preventDefault();
+      addTask();
+    }
+  });
+  $('todayBtn').addEventListener('click', ()=> $('newDate').value = localDateISO());
+  $('tomorrowBtn').addEventListener('click', ()=> $('newDate').value = tomorrowISO());
+  $('clearDateBtn').addEventListener('click', ()=> $('newDate').value = '');
+
+  function dictate(target, button){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ toast('Ditado por voz não está disponível neste navegador.'); return; }
+    if(recognition){ try{ recognition.stop(); }catch(e){} return; }
+
+    recognition = new SR();
+    recognition.lang = 'pt-BR';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    const original = target.value.trim();
+    button.classList.add('listening');
+    button.textContent = '⏹️';
+
+    recognition.onresult = function(event){
+      let finalText='', interim='';
+      for(let i=0;i<event.results.length;i++){
+        const txt = event.results[i][0].transcript;
+        if(event.results[i].isFinal) finalText += txt;
+        else interim += txt;
+      }
+      const spoken = (finalText || interim).trim();
+      target.value = [original, spoken].filter(Boolean).join(original && spoken ? ' ' : '');
+    };
+    recognition.onerror = function(event){
+      const map = {
+        'not-allowed':'Permissão do microfone negada.',
+        'service-not-allowed':'Serviço de reconhecimento bloqueado.',
+        'network':'Falha de rede no reconhecimento de voz.',
+        'no-speech':'Nenhuma fala foi detectada.'
+      };
+      toast(map[event.error] || 'Não foi possível reconhecer a fala.');
+    };
+    recognition.onend = function(){
+      button.classList.remove('listening');
+      button.textContent = '🎙️';
+      recognition = null;
+    };
+    try{ recognition.start(); }catch(e){ toast('Não foi possível iniciar o microfone.'); recognition = null; }
+  }
+  $('newMic').addEventListener('click', ()=> dictate($('newText'), $('newMic')));
+
+  function bucket(item){
+    if(item.status === 'done') return 'done';
+    if(!item.due) return 'nodate';
+    const today = localDateISO();
+    if(item.due < today) return 'late';
+    if(item.due === today) return 'today';
+    return 'next';
+  }
+  function priorityClass(p){ return p === 'Alta' ? 'high' : p === 'Média' ? 'medium' : 'low'; }
+  function priorityBadgeClass(p){ return p === 'Alta' ? 'priority-high' : p === 'Média' ? 'priority-medium' : 'priority-low'; }
+  function filteredItems(){
+    const q = $('search').value.trim().toLowerCase();
+    const pr = $('filterPriority').value;
+    const cat = $('filterCategory').value;
+    const st = $('filterStatus').value;
+    return items.filter(i => {
+      const text = (i.text + ' ' + i.category).toLowerCase();
+      if(q && !text.includes(q)) return false;
+      if(pr && i.priority !== pr) return false;
+      if(cat && i.category !== cat) return false;
+      if(st && i.status !== st) return false;
+      return true;
+    });
+  }
+  function renderCategories(){
+    const selected = $('filterCategory').value;
+    const cats = [...new Set(items.map(i => i.category || 'Geral'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    $('filterCategory').innerHTML = '<option value="">Todas as categorias</option>' +
+      cats.map(c => `<option value="${esc(c)}" ${c === selected ? 'selected' : ''}>${esc(c)}</option>`).join('');
+  }
+  function cardHTML(i){
+    const whenText = i.due ? `${fmtDate(i.due)}${i.dueTime ? ' · ' + i.dueTime : ''}` : 'Sem data definida';
+    const statusText = i.status === 'done' ? 'Concluída' : 'Aberta';
+    return `<article class="card ${priorityClass(i.priority)} ${i.status==='done' ? 'done' : ''}" data-id="${esc(i.id)}">
+      <div class="card-top">
+        <div class="pin">📌</div>
+        <div class="badge-row">
+          <span class="badge ${priorityBadgeClass(i.priority)}">🔥 ${esc(i.priority)}</span>
+          <span class="badge status">${i.status==='done' ? '✅' : '📍'} ${statusText}</span>
+        </div>
+      </div>
+      <div class="card-title">${esc(i.text)}</div>
+      <div class="card-grid">
+        <div class="info-pill">
+          <div class="i">📅</div>
+          <div class="txt"><small>Prazo</small><strong>${esc(whenText)}</strong></div>
+        </div>
+        <div class="info-pill">
+          <div class="i">🏷️</div>
+          <div class="txt"><small>Categoria</small><strong>${esc(i.category)}</strong></div>
+        </div>
+      </div>
+      ${i.status==='done' && i.completedAt ? `<div style="margin-top:10px;color:#667085;font-size:12px"><strong>✅ Concluída em:</strong> ${new Date(i.completedAt).toLocaleString('pt-BR')}</div>` : ''}
+      <div class="card-actions">
+        <button type="button" class="small soft edit-btn">✏️ Editar</button>
+        <button type="button" class="small soft done-btn">${i.status==='done' ? '↩️ Reabrir' : '✅ Concluir'}</button>
+        <button type="button" class="small ghost-danger del-btn">🗑 Excluir</button>
+      </div>
+    </article>`;
+  }
+
+  function render(){
+    renderCategories();
+    const f = filteredItems();
+    const groups = {late:[], today:[], next:[], done:[]};
+
+    f.forEach(i => {
+      const b = bucket(i);
+      if(b === 'nodate') groups.next.push(i);
+      else groups[b].push(i);
+    });
+
+    const rank = {'Alta':0,'Média':1,'Baixa':2};
+    Object.values(groups).forEach(group => {
+      group.sort((a,b) => {
+        if(a.due && b.due && a.due !== b.due) return a.due.localeCompare(b.due);
+        if(a.due && !b.due) return -1;
+        if(!a.due && b.due) return 1;
+        if((a.dueTime||'') !== (b.dueTime||'')){
+          if(a.dueTime && !b.dueTime) return -1;
+          if(!a.dueTime && b.dueTime) return 1;
+          return (a.dueTime||'').localeCompare(b.dueTime||'');
+        }
+        return (rank[a.priority] ?? 9) - (rank[b.priority] ?? 9);
+      });
+    });
+
+    const targets = {late:'colLate', today:'colToday', next:'colNext', done:'colDone'};
+    const counts = {late:'cLate', today:'cToday', next:'cNext', done:'cDone'};
+    Object.keys(groups).forEach(k => {
+      $(targets[k]).innerHTML = groups[k].length ? groups[k].map(cardHTML).join('') : '<div class="empty">Nenhuma pendência nesta área.</div>';
+      $(counts[k]).textContent = groups[k].length;
+    });
+
+    $('boardLate').hidden = groups.late.length === 0;
+    $('kanban').append($('boardLate'), $('boardToday'), $('boardNext'));
+
+    const all = {late:0, today:0, next:0, nodate:0, done:0};
+    items.forEach(i => all[bucket(i)]++);
+    $('mOpen').textContent = items.filter(i => i.status === 'open').length;
+    $('mLate').textContent = all.late;
+    $('mToday').textContent = all.today;
+    $('mNext').textContent = all.next;
+    $('mNoDate').textContent = all.nodate;
+    $('mDone').textContent = all.done;
+
+    document.querySelectorAll('.card').forEach(card => {
+      const id = card.dataset.id;
+      card.querySelector('.edit-btn').addEventListener('click', ()=>openEdit(id));
+      card.querySelector('.done-btn').addEventListener('click', ()=>toggleDone(id));
+      card.querySelector('.del-btn').addEventListener('click', ()=>removeItem(id));
+    });
+  }
+
+  function toggleDone(id){
+    const i = items.find(x => x.id === id);
+    if(!i) return;
+    if(i.status === 'done'){ i.status = 'open'; i.completedAt = ''; }
+    else { i.status = 'done'; i.completedAt = nowISO(); }
+    save(); render();
+  }
+  function removeItem(id){
+    const i = items.find(x => x.id === id);
+    if(!i) return;
+    if(!confirm('Excluir esta tarefa?')) return;
+    items = items.filter(x => x.id !== id);
+    save(); render(); toast('Tarefa excluída.');
+  }
+
+  const dialog = $('editDialog');
+  function openEdit(id){
+    const i = items.find(x => x.id === id);
+    if(!i) return;
+    $('editId').value = i.id;
+    $('editText').value = i.text;
+    $('editDate').value = i.due;
+    $('editTime').value = i.dueTime || '';
+    $('editPriority').value = i.priority;
+    $('editCategory').value = i.category;
+    $('editStatus').value = i.status;
+    dialog.showModal();
+  }
+  $('cancelEdit').addEventListener('click', ()=>dialog.close());
+  $('editForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const i = items.find(x => x.id === $('editId').value);
+    if(!i) return;
+    const text = $('editText').value.trim();
+    if(!text){ toast('A atividade não pode ficar vazia.'); return; }
+    const oldStatus = i.status;
+    i.text = text;
+    i.due = $('editDate').value;
+    i.dueTime = $('editTime').value;
+    i.priority = $('editPriority').value;
+    i.category = $('editCategory').value.trim() || 'Geral';
+    i.status = $('editStatus').value;
+    if(oldStatus !== 'done' && i.status === 'done') i.completedAt = nowISO();
+    if(i.status !== 'done') i.completedAt = '';
+    save(); dialog.close(); render(); toast('Tarefa atualizada.');
+  });
+
+  ['search','filterPriority','filterCategory','filterStatus'].forEach(id => {
+    $(id).addEventListener(id === 'search' ? 'input' : 'change', render);
+  });
+
+  function download(filename, content, type){
+    const blob = new Blob([content], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 500);
+  }
+  $('backupBtn').addEventListener('click', ()=>{
+    const payload = {version:4, exportedAt:nowISO(), items};
+    download(`backup_tarefas_${localDateISO()}.json`, JSON.stringify(payload, null, 2), 'application/json');
+  });
+  $('importFile').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const obj = JSON.parse(await file.text());
+      const incoming = Array.isArray(obj) ? obj : obj.items;
+      if(!Array.isArray(incoming)) throw new Error('Formato inválido');
+      if(items.length && !confirm('Importar o backup substituirá os dados atuais. Continuar?')){ e.target.value=''; return; }
+      items = incoming.map(normalizeItem).filter(x => x.text);
+      save(); render(); toast('Backup importado com sucesso.');
+    }catch(err){
+      alert('Não foi possível importar este arquivo. Verifique se é um backup válido.');
+    }
+    e.target.value='';
+  });
+  function csvCell(v){ return `"${String(v ?? '').replace(/"/g,'""')}"`; }
+  $('csvBtn').addEventListener('click', ()=>{
+    const header = ['Tarefa','Data','Horário','Prioridade','Categoria','Status','Criada em','Concluída em'];
+    const rows = items.map(i => [i.text,i.due,i.dueTime||'',i.priority,i.category,i.status==='done'?'Concluída':'Aberta',i.createdAt,i.completedAt]);
+    const csv = '\ufeff' + [header,...rows].map(r => r.map(csvCell).join(';')).join('\r\n');
+    download(`tarefas_${localDateISO()}.csv`, csv, 'text/csv;charset=utf-8');
+  });
+  $('printBtn').addEventListener('click', ()=>window.print());
+
+  load();
+  $('newDate').value = localDateISO();
+  render();
+
+  if(!(window.SpeechRecognition || window.webkitSpeechRecognition)){
+    $('voiceNotice').innerHTML = 'ℹ️ <strong>Ditado por voz indisponível neste navegador.</strong> A digitação, o salvamento, a data e o horário continuam funcionando normalmente.';
+  }
+})();
+</script>
+</body>
+</html>
