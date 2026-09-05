@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>PAULO | Lembretes</title>
+<style>
+:root{
+  --ink:#111827;
+  --muted:#667085;
+  --line:#d7dce3;
+  --paper:#ffffff;
+  --bg:#eef1f4;
+  --soft:#f6f7f8;
+  --shadow:0 10px 28px rgba(15,23,42,.10);
+  --green:#166534;
+  --danger:#b42318;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+  background:linear-gradient(180deg,#f7f8fa 0%,#eceff2 100%);
+  color:var(--ink);
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{max-width:1220px;margin:0 auto;padding:18px}
+.topbar{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:16px;
+}
+.brand h1{margin:0;font-size:31px;letter-spacing:-.02em}
+.brand .motto{margin-top:3px;font-family:Georgia,serif;font-style:italic;font-size:18px;color:#31363d}
+.print-date-chip{font-size:13px;color:#394150;background:#e7e8ea;border-radius:999px;padding:9px 14px;white-space:nowrap}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+button,.file-label{
+  border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 13px;border-radius:11px;font-weight:750;
+  box-shadow:0 2px 6px rgba(15,23,42,.04);transition:.15s ease
+}
+button:hover,.file-label:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(15,23,42,.08)}
+button.primary{background:var(--green);color:#fff;border-color:var(--green)}
+button.danger{color:var(--danger);background:#fff7f7;border-color:#ffd8d8}
+button.subtle{background:#f8fafc}
+.file-label{display:inline-flex;align-items:center}
+input[type=file]{display:none}
+.entry-panel{
+  background:#fff;border:1px solid #e4e7eb;border-radius:16px;box-shadow:var(--shadow);padding:14px;margin-bottom:18px
+}
+.entry-title{display:flex;align-items:center;gap:9px;font-weight:900;margin-bottom:10px}
+.entry-grid{display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr auto;gap:10px;align-items:end}
+.field label{display:block;font-size:11px;font-weight:850;color:#555f6f;margin-bottom:5px}
+textarea,input[type=date],input[type=time],select{
+  width:100%;border:1px solid #d8dee7;background:#fff;border-radius:11px;padding:11px;outline:none;color:var(--ink)
+}
+textarea{min-height:72px;resize:vertical;padding-right:50px}
+textarea:focus,input:focus,select:focus{border-color:#8d99a8;box-shadow:0 0 0 3px rgba(71,84,103,.09)}
+.note-input{position:relative}
+.mic{position:absolute;right:7px;bottom:7px;width:38px;height:38px;padding:0;font-size:17px}
+.mic.listening{background:#fff1f2;border-color:#fecdd3}
+.quick-dates{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.quick-dates button{font-size:11px;padding:5px 7px;border-radius:8px;background:#fafafa}
+.save-btn{min-height:44px;white-space:nowrap}
+.board-paper{
+  background:#fff;border:1px solid #e4e7eb;border-radius:18px;box-shadow:0 14px 36px rgba(15,23,42,.10);padding:24px;
+}
+.board-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid #4b5563;padding-bottom:12px;margin-bottom:4px}
+.board-header .left h2{margin:0;font-size:28px;letter-spacing:-.02em}
+.board-header .left p{margin:2px 0 0;font-family:Georgia,serif;font-style:italic;font-size:17px;color:#2d333b}
+.board-header .today-chip{font-size:12px;background:#ededed;border-radius:999px;padding:8px 13px;color:#333}
+.board-section{padding:13px 0 8px;border-bottom:1.5px solid #525a65}
+.board-section:last-of-type{border-bottom:none}
+.board-section.hidden{display:none}
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:10px}
+.section-title-wrap{display:flex;gap:12px;align-items:flex-start}
+.section-icon{width:42px;height:42px;display:grid;place-items:center;font-size:27px;line-height:1}
+.section-title h3{margin:0;font-size:22px;letter-spacing:-.02em}
+.section-title .count-line{margin-top:1px;color:#30363d;font-size:13px}
+.section-note{font-family:Georgia,serif;font-style:italic;font-size:14px;color:#30363d;padding-top:4px;text-align:right}
+.note-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.sticky{
+  position:relative;aspect-ratio:1 / 1.06;background:linear-gradient(180deg,#fafafa,#f0f0f0);border:1px solid #d0d0d0;
+  border-radius:2px;padding:17px 12px 12px;box-shadow:0 7px 12px rgba(0,0,0,.16);overflow:hidden;cursor:pointer;
+  transition:.15s ease;transform-origin:center center
+}
+.sticky:hover{transform:translateY(-2px) rotate(0deg)!important;box-shadow:0 11px 18px rgba(0,0,0,.19)}
+.sticky::before{
+  content:"";position:absolute;top:-5px;left:50%;transform:translateX(-50%) rotate(-2deg);width:38px;height:11px;
+  background:#dedede;border:1px solid #d0d0d0;opacity:.9
+}
+.sticky.pin::before{width:11px;height:11px;border-radius:50%;background:#888;border-color:#666;box-shadow:1px 2px 2px rgba(0,0,0,.25)}
+.sticky.r1{transform:rotate(-1.1deg)}
+.sticky.r2{transform:rotate(.8deg)}
+.sticky.r3{transform:rotate(-.5deg)}
+.sticky.r4{transform:rotate(1deg)}
+.sticky .date{font-weight:900;font-size:14px;line-height:1.08}
+.sticky .weekday{font-style:italic;font-size:12px;margin-top:2px}
+.sticky .time{font-weight:900;font-size:14px;margin-top:4px}
+.sticky .text{margin-top:9px;font-size:14px;line-height:1.26;white-space:pre-wrap;word-break:break-word}
+.sticky .text.fs1{font-size:14px}
+.sticky .text.fs2{font-size:12.6px;line-height:1.22}
+.sticky .text.fs3{font-size:11.3px;line-height:1.18}
+.sticky .text.fs4{font-size:10px;line-height:1.15}
+.empty-box{grid-column:1/-1;border:1px dashed #c9ced6;border-radius:10px;padding:18px;text-align:center;color:#8a93a0;background:#fafafa}
+.footer-phrase{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding-top:14px}
+.footer-phrase .quote{font-family:Georgia,serif;font-style:italic;font-size:16px}
+.footer-phrase .brand-small{font-size:13px;font-weight:800}
+.footer-phrase .line{height:1px;background:#555;flex:1;margin-bottom:5px}
+#toast{position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;padding:12px 14px;border-radius:12px;opacity:0;transform:translateY(7px);transition:.2s;pointer-events:none;z-index:100}
+#toast.show{opacity:1;transform:translateY(0)}
+dialog{border:none;border-radius:18px;width:min(620px,calc(100% - 24px));padding:0;box-shadow:0 28px 80px rgba(15,23,42,.28)}
+dialog::backdrop{background:rgba(15,23,42,.48)}
+.dialog-body{padding:18px}
+.dialog-title{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.dialog-title h2{margin:0;font-size:21px}
+.dialog-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.dialog-grid .full{grid-column:1/-1}
+dialog label{display:block;font-size:11px;font-weight:850;color:#555f6f;margin-bottom:5px}
+dialog textarea{min-height:120px;padding-right:11px}
+.dialog-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:15px;padding-top:13px;border-top:1px solid #e5e7eb}
+#printStage{display:none}
+@media(max-width:950px){
+  .entry-grid{grid-template-columns:1fr 1fr 1fr}
+  .entry-grid .field:first-child{grid-column:1/-1}
+  .save-btn{grid-column:1/-1}
+  .note-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .app{padding:10px}
+  .topbar{display:block}
+  .brand h1{font-size:25px}
+  .brand .motto{font-size:15px}
+  .print-date-chip{display:inline-block;margin-top:8px}
+  .toolbar{display:grid;grid-template-columns:1fr 1fr}
+  .entry-grid{display:block}
+  .field{margin-bottom:10px}
+  .save-btn{width:100%}
+  .board-paper{padding:14px}
+  .board-header{align-items:flex-start}
+  .board-header .left h2{font-size:23px}
+  .board-header .left p{font-size:14px}
+  .board-header .today-chip{font-size:10px;padding:6px 8px}
+  .section-head{display:block}
+  .section-note{text-align:left;padding-left:54px;margin-top:-5px;margin-bottom:8px}
+  .note-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .sticky{padding:14px 9px 9px}
+  .sticky .date{font-size:12px}
+  .sticky .weekday{font-size:10.5px}
+  .sticky .time{font-size:12px}
+  .sticky .text.fs1{font-size:12px}
+  .sticky .text.fs2{font-size:11px}
+  .sticky .text.fs3{font-size:10px}
+  .sticky .text.fs4{font-size:9px}
+  .dialog-grid{grid-template-columns:1fr}
+  .dialog-grid .full{grid-column:auto}
+}
+
+/* IMPRESSÃO A4 — SOMENTE O PLANNER DE POST-ITS */
+@page{size:A4 portrait;margin:7mm}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:#fff!important}
+  .app{display:none!important}
+  #printStage{display:block!important}
+  .print-page{width:196mm;min-height:283mm;margin:0 auto;page-break-after:always;padding:0 1mm;font-family:Arial,sans-serif;color:#111}
+  .print-page:last-child{page-break-after:auto}
+  .p-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:.45mm solid #555;padding-bottom:2mm;margin-bottom:1.2mm}
+  .p-title{font-size:15pt;font-weight:900;line-height:1}
+  .p-motto{font-family:Georgia,serif;font-style:italic;font-size:9pt;margin-top:1mm}
+  .p-date{font-size:8pt;background:#ececec;border-radius:10mm;padding:2mm 4mm;color:#333}
+  .p-section{padding:2.1mm 0 2.3mm;border-bottom:.35mm solid #666;page-break-inside:avoid}
+  .p-section:last-of-type{border-bottom:none}
+  .p-sec-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5mm}
+  .p-sec-left{display:flex;gap:2mm;align-items:flex-start}
+  .p-sec-icon{font-size:13pt;line-height:1}
+  .p-sec-title{font-size:11pt;font-weight:900;line-height:1}
+  .p-sec-count{font-size:7.5pt;margin-top:.8mm}
+  .p-sec-note{font-family:Georgia,serif;font-style:italic;font-size:7.5pt;padding-top:.5mm}
+  .p-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2.5mm}
+  .p-sticky{
+    position:relative;height:39.5mm;background:linear-gradient(180deg,#f5f5f5,#fcfcfc);border:.25mm solid #c8c8c8;
+    padding:4.5mm 2.5mm 2.3mm;box-shadow:0 1.2mm 2.2mm rgba(0,0,0,.17);overflow:hidden;page-break-inside:avoid
+  }
+  .p-sticky::before{content:"";position:absolute;top:-1.3mm;left:50%;transform:translateX(-50%) rotate(-2deg);width:11mm;height:3.3mm;background:#dedede;border:.2mm solid #d0d0d0}
+  .p-sticky.pin::before{width:3mm;height:3mm;border-radius:50%;background:#858585;border-color:#666;box-shadow:.3mm .5mm .5mm rgba(0,0,0,.25)}
+  .p-sticky.r1{transform:rotate(-.55deg)}
+  .p-sticky.r2{transform:rotate(.4deg)}
+  .p-sticky.r3{transform:rotate(-.25deg)}
+  .p-sticky.r4{transform:rotate(.5deg)}
+  .p-sticky .date{font-size:7.7pt;font-weight:900;line-height:1}
+  .p-sticky .weekday{font-family:Georgia,serif;font-style:italic;font-size:6.6pt;margin-top:.7mm}
+  .p-sticky .time{font-size:7.7pt;font-weight:900;margin-top:1mm}
+  .p-sticky .text{margin-top:2.5mm;line-height:1.18;white-space:pre-wrap;word-break:break-word}
+  .p-sticky .text.fs1{font-size:7.6pt}
+  .p-sticky .text.fs2{font-size:6.8pt}
+  .p-sticky .text.fs3{font-size:6.0pt}
+  .p-sticky .text.fs4{font-size:5.2pt;line-height:1.12}
+  .p-footer{display:flex;align-items:flex-end;gap:4mm;margin-top:2mm;font-size:7.5pt}
+  .p-footer .quote{font-family:Georgia,serif;font-style:italic;font-size:8pt}
+  .p-footer .line{height:.25mm;background:#555;flex:1;margin-bottom:1mm}
+  .p-footer .brand{font-weight:900}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <h1>PAULO | Lembretes</h1>
+      <div class="motto">Pequenas ações, grandes resultados.</div>
+    </div>
+    <div class="print-date-chip" id="screenDate"></div>
+  </div>
+
+  <div class="toolbar">
+    <button id="backupBtn">💾 Backup</button>
+    <label class="file-label" for="importFile">📥 Importar</label>
+    <input id="importFile" type="file" accept=".json,application/json">
+    <button id="csvBtn">📊 CSV</button>
+    <button id="printBtn">🖨️ Imprimir / PDF</button>
+  </div>
+
+  <section class="entry-panel">
+    <div class="entry-title">➕ Novo lembrete</div>
+    <div class="entry-grid">
+      <div class="field">
+        <label for="newText">LEMBRETE</label>
+        <div class="note-input">
+          <textarea id="newText" placeholder="Ex.: Ligar para Ivanildo"></textarea>
+          <button type="button" class="mic" id="newMic" title="Ditar">🎙️</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="newDate">DATA</label>
+        <input id="newDate" type="date">
+        <div class="quick-dates">
+          <button type="button" id="todayBtn">Hoje</button>
+          <button type="button" id="tomorrowBtn">Amanhã</button>
+          <button type="button" id="clearDateBtn">Sem data</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="newTime">HORA</label>
+        <input id="newTime" type="time" step="300">
+      </div>
+      <div class="field">
+        <label for="newPriority">PRIORIDADE</label>
+        <select id="newPriority">
+          <option>Alta</option>
+          <option selected>Média</option>
+          <option>Baixa</option>
+        </select>
+      </div>
+      <button class="primary save-btn" id="saveTaskBtn">✅ Salvar</button>
+    </div>
+  </section>
+
+  <main class="board-paper">
+    <div class="board-header">
+      <div class="left">
+        <h2>PAULO | Lembretes</h2>
+        <p>Pequenas ações, grandes resultados.</p>
+      </div>
+      <div class="today-chip" id="boardDate"></div>
+    </div>
+
+    <section class="board-section" id="lateSection">
+      <div class="section-head">
+        <div class="section-title-wrap">
+          <div class="section-icon">⚠️</div>
+          <div class="section-title"><h3>ATRASADOS</h3><div class="count-line"><span id="lateCount">0</span> lembrete(s)</div></div>
+        </div>
+        <div class="section-note">O que já deveria ter sido feito.</div>
+      </div>
+      <div class="note-grid" id="lateGrid"></div>
+    </section>
+
+    <section class="board-section" id="todaySection">
+      <div class="section-head">
+        <div class="section-title-wrap">
+          <div class="section-icon">🗓️</div>
+          <div class="section-title"><h3>PARA HOJE</h3><div class="count-line"><span id="todayCount">0</span> lembrete(s)</div></div>
+        </div>
+        <div class="section-note">Hoje é o dia. Bora fazer!</div>
+      </div>
+      <div class="note-grid" id="todayGrid"></div>
+    </section>
+
+    <section class="board-section" id="futureSection">
+      <div class="section-head">
+        <div class="section-title-wrap">
+          <div class="section-icon">⏩</div>
+          <div class="section-title"><h3>FUTUROS</h3><div class="count-line"><span id="futureCount">0</span> lembrete(s)</div></div>
+        </div>
+        <div class="section-note">O que vem pela frente.</div>
+      </div>
+      <div class="note-grid" id="futureGrid"></div>
+    </section>
+
+    <div class="footer-phrase">
+      <div class="quote">Disciplina hoje, conquista sempre!</div>
+      <div class="line"></div>
+      <div class="brand-small">PAULO | Gestor de Tarefas</div>
+    </div>
+  </main>
+</div>
+
+<dialog id="editDialog">
+  <div class="dialog-body">
+    <div class="dialog-title"><span style="font-size:24px">📌</span><h2>Editar lembrete</h2></div>
+    <input type="hidden" id="editId">
+    <div class="dialog-grid">
+      <div class="full">
+        <label for="editText">LEMBRETE</label>
+        <textarea id="editText"></textarea>
+      </div>
+      <div>
+        <label for="editDate">DATA</label>
+        <input id="editDate" type="date">
+      </div>
+      <div>
+        <label for="editTime">HORA</label>
+        <input id="editTime" type="time" step="300">
+      </div>
+      <div>
+        <label for="editPriority">PRIORIDADE</label>
+        <select id="editPriority"><option>Alta</option><option>Média</option><option>Baixa</option></select>
+      </div>
+      <div>
+        <label for="editStatus">STATUS</label>
+        <select id="editStatus"><option value="open">Aberto</option><option value="done">Concluído</option></select>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="cancelEdit">Cancelar</button>
+      <button type="button" class="danger" id="deleteEdit">🗑 Excluir</button>
+      <button type="button" class="subtle" id="toggleDoneEdit">✅ Concluir</button>
+      <button type="button" class="primary" id="saveEdit">💾 Salvar alterações</button>
+    </div>
+  </div>
+</dialog>
+
+<div id="printStage"></div>
+<div id="toast"></div>
+
+<script>
+(function(){
+  const STORAGE_KEY='gestor_pendencias_local_v1';
+  let items=[];
+  let recognition=null;
+  const $=id=>document.getElementById(id);
+
+  function localDateISO(date=new Date()){
+    const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,'0'),d=String(date.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  function tomorrowISO(){const d=new Date();d.setDate(d.getDate()+1);return localDateISO(d)}
+  function fmtDate(iso){if(!iso)return 'Sem data';const [y,m,d]=iso.split('-');return `${d}/${m}/${y}`}
+  function weekDay(iso){
+    if(!iso)return 'Sem dia';
+    const [y,m,d]=iso.split('-').map(Number);
+    const dt=new Date(y,m-1,d,12,0,0);
+    return new Intl.DateTimeFormat('pt-BR',{weekday:'long'}).format(dt);
+  }
+  function todayLabel(){return `Impressão: ${fmtDate(localDateISO())}`}
+  function nowISO(){return new Date().toISOString()}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+  function fontClass(text){const n=(text||'').trim().length;return n<=48?'fs1':n<=90?'fs2':n<=145?'fs3':'fs4'}
+  function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),2200)}
+  function normalize(x){return {
+    id:x.id||uid(),text:String(x.text||'').trim(),due:/^\d{4}-\d{2}-\d{2}$/.test(x.due||'')?x.due:'',
+    dueTime:/^\d{2}:\d{2}$/.test(x.dueTime||'')?x.dueTime:'',priority:['Alta','Média','Baixa'].includes(x.priority)?x.priority:'Média',
+    status:x.status==='done'?'done':'open',createdAt:x.createdAt||nowISO(),completedAt:x.completedAt||''
+  }}
+  function load(){try{const raw=localStorage.getItem(STORAGE_KEY);const p=raw?JSON.parse(raw):[];items=Array.isArray(p)?p.map(normalize).filter(i=>i.text):[]}catch(e){items=[]}}
+  function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(items))}
+  function bucket(i){
+    if(i.status==='done')return 'done';
+    if(!i.due)return 'future';
+    const t=localDateISO();
+    if(i.due<t)return 'late';
+    if(i.due===t)return 'today';
+    return 'future';
+  }
+  function sortList(a){
+    const rank={Alta:0,Média:1,Baixa:2};
+    return a.sort((x,y)=>{
+      if(x.due&&y.due&&x.due!==y.due)return x.due.localeCompare(y.due);
+      if(x.due&&!y.due)return -1;if(!x.due&&y.due)return 1;
+      if((x.dueTime||'')!==(y.dueTime||''))return (x.dueTime||'99:99').localeCompare(y.dueTime||'99:99');
+      return (rank[x.priority]??9)-(rank[y.priority]??9);
+    });
+  }
+  function resetEntry(){$('newText').value='';$('newDate').value=localDateISO();$('newTime').value='';$('newPriority').value='Média';$('newText').focus()}
+  function addTask(){
+    const text=$('newText').value.trim();if(!text){toast('Digite o lembrete.');return}
+    items.unshift(normalize({text,due:$('newDate').value,dueTime:$('newTime').value,priority:$('newPriority').value,status:'open'}));
+    save();render();resetEntry();toast('Lembrete salvo.');
+  }
+
+  function stickyHTML(i,idx,print=false){
+    const rot=['r1','r2','r3','r4'][idx%4];
+    const pin=idx%3===2?'pin':'';
+    const cls=print?'p-sticky':'sticky';
+    const textCls=fontClass(i.text);
+    return `<article class="${cls} ${rot} ${pin}" ${print?'':`data-id="${esc(i.id)}" tabindex="0" role="button" aria-label="Editar lembrete: ${esc(i.text)}"`}>
+      <div class="date">${esc(fmtDate(i.due))}</div>
+      <div class="weekday">${esc(weekDay(i.due))}</div>
+      <div class="time">${esc(i.dueTime||'—')}</div>
+      <div class="text ${textCls}">${esc(i.text)}</div>
+    </article>`;
+  }
+
+  function renderBoard(){
+    const open=items.filter(i=>i.status==='open');
+    const late=sortList(open.filter(i=>bucket(i)==='late'));
+    const today=sortList(open.filter(i=>bucket(i)==='today'));
+    const future=sortList(open.filter(i=>bucket(i)==='future'));
+    $('lateCount').textContent=late.length;$('todayCount').textContent=today.length;$('futureCount').textContent=future.length;
+    $('lateSection').classList.toggle('hidden',late.length===0);
+    $('lateGrid').innerHTML=late.length?late.map((i,x)=>stickyHTML(i,x)).join(''):'<div class="empty-box">Nenhum atrasado.</div>';
+    $('todayGrid').innerHTML=today.length?today.map((i,x)=>stickyHTML(i,x)).join(''):'<div class="empty-box">Nenhum lembrete para hoje.</div>';
+    $('futureGrid').innerHTML=future.length?future.map((i,x)=>stickyHTML(i,x)).join(''):'<div class="empty-box">Nenhum lembrete futuro.</div>';
+    document.querySelectorAll('.sticky[data-id]').forEach(el=>{
+      const openIt=()=>openEdit(el.dataset.id);
+      el.addEventListener('click',openIt);
+      el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openIt()}});
+    });
+  }
+
+  function buildPrintPages(){
+    const open=items.filter(i=>i.status==='open');
+    const late=sortList(open.filter(i=>bucket(i)==='late').slice());
+    const today=sortList(open.filter(i=>bucket(i)==='today').slice());
+    const future=sortList(open.filter(i=>bucket(i)==='future').slice());
+    let li=0,ti=0,fi=0,pageNo=1,pages=[];
+
+    if(!late.length&&!today.length&&!future.length){
+      pages.push(`<section class="print-page"><div class="p-head"><div><div class="p-title">PAULO | Lembretes</div><div class="p-motto">Pequenas ações, grandes resultados.</div></div><div class="p-date">${todayLabel()}</div></div><div style="padding:40mm 0;text-align:center;font-size:13pt;color:#666">Nenhum lembrete aberto para impressão.</div></section>`);
+    }
+
+    while(li<late.length||ti<today.length||fi<future.length){
+      const l=late.slice(li,li+10); li+=l.length;
+      const t=today.slice(ti,ti+10); ti+=t.length;
+      const futureCap=l.length===0?20:10;
+      const f=future.slice(fi,fi+futureCap); fi+=f.length;
+
+      const sec=(title,icon,note,list)=> list.length?`<section class="p-section"><div class="p-sec-head"><div class="p-sec-left"><div class="p-sec-icon">${icon}</div><div><div class="p-sec-title">${title}</div><div class="p-sec-count">${list.length} lembrete(s)</div></div></div><div class="p-sec-note">${note}</div></div><div class="p-grid">${list.map((i,x)=>stickyHTML(i,x,true)).join('')}</div></section>`:'';
+
+      pages.push(`<section class="print-page">
+        <div class="p-head"><div><div class="p-title">PAULO | Lembretes</div><div class="p-motto">Pequenas ações, grandes resultados.</div></div><div class="p-date">${todayLabel()}</div></div>
+        ${sec('ATRASADOS','⚠','O que já deveria ter sido feito.',l)}
+        ${sec('PARA HOJE','▣','Hoje é o dia. Bora fazer!',t)}
+        ${sec('FUTUROS','▶▶','O que vem pela frente.',f)}
+        <div class="p-footer"><div class="quote">Disciplina hoje, conquista sempre!</div><div class="line"></div><div class="brand">PAULO | Gestor de Tarefas</div></div>
+      </section>`);
+      pageNo++;
+    }
+    $('printStage').innerHTML=pages.join('');
+  }
+
+  function render(){renderBoard();buildPrintPages()}
+
+  const dialog=$('editDialog');
+  function openEdit(id){
+    const i=items.find(x=>x.id===id);if(!i)return;
+    $('editId').value=i.id;$('editText').value=i.text;$('editDate').value=i.due;$('editTime').value=i.dueTime||'';$('editPriority').value=i.priority;$('editStatus').value=i.status;
+    $('toggleDoneEdit').textContent=i.status==='done'?'↩️ Reabrir':'✅ Concluir';
+    dialog.showModal();
+  }
+  function currentEdit(){return items.find(x=>x.id===$('editId').value)}
+  $('saveEdit').addEventListener('click',()=>{
+    const i=currentEdit();if(!i)return;const text=$('editText').value.trim();if(!text){toast('O lembrete não pode ficar vazio.');return}
+    const old=i.status;i.text=text;i.due=$('editDate').value;i.dueTime=$('editTime').value;i.priority=$('editPriority').value;i.status=$('editStatus').value;
+    if(old!=='done'&&i.status==='done')i.completedAt=nowISO();if(i.status!=='done')i.completedAt='';
+    save();dialog.close();render();toast('Lembrete atualizado.');
+  });
+  $('toggleDoneEdit').addEventListener('click',()=>{
+    const i=currentEdit();if(!i)return;
+    if(i.status==='done'){i.status='open';i.completedAt=''}else{i.status='done';i.completedAt=nowISO()}
+    save();dialog.close();render();toast(i.status==='done'?'Lembrete concluído.':'Lembrete reaberto.');
+  });
+  $('deleteEdit').addEventListener('click',()=>{
+    const i=currentEdit();if(!i)return;if(!confirm('Excluir este lembrete?'))return;
+    items=items.filter(x=>x.id!==i.id);save();dialog.close();render();toast('Lembrete excluído.');
+  });
+  $('cancelEdit').addEventListener('click',()=>dialog.close());
+
+  $('saveTaskBtn').addEventListener('click',addTask);
+  $('newText').addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();addTask()}});
+  $('todayBtn').addEventListener('click',()=>$('newDate').value=localDateISO());
+  $('tomorrowBtn').addEventListener('click',()=>$('newDate').value=tomorrowISO());
+  $('clearDateBtn').addEventListener('click',()=>$('newDate').value='');
+
+  function dictate(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Ditado por voz indisponível neste navegador.');return}
+    if(recognition){try{recognition.stop()}catch(e){}return}
+    recognition=new SR();recognition.lang='pt-BR';recognition.interimResults=true;recognition.continuous=false;
+    const original=$('newText').value.trim();$('newMic').classList.add('listening');$('newMic').textContent='⏹';
+    recognition.onresult=e=>{let fin='',inter='';for(let i=0;i<e.results.length;i++){const txt=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=txt;else inter+=txt}const spoken=(fin||inter).trim();$('newText').value=[original,spoken].filter(Boolean).join(original&&spoken?' ':'')};
+    recognition.onend=()=>{$('newMic').classList.remove('listening');$('newMic').textContent='🎙️';recognition=null};
+    recognition.onerror=()=>toast('Não foi possível reconhecer a fala.');
+    try{recognition.start()}catch(e){recognition=null}
+  }
+  $('newMic').addEventListener('click',dictate);
+
+  function download(name,content,type){const b=new Blob([content],{type});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),500)}
+  $('backupBtn').addEventListener('click',()=>download(`backup_lembretes_${localDateISO()}.json`,JSON.stringify({version:6,exportedAt:nowISO(),items},null,2),'application/json'));
+  $('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());const incoming=Array.isArray(o)?o:o.items;if(!Array.isArray(incoming))throw 0;if(items.length&&!confirm('Importar substituirá os lembretes atuais. Continuar?')){e.target.value='';return}items=incoming.map(normalize).filter(x=>x.text);save();render();toast('Backup importado.')}catch(err){alert('Backup inválido.')}e.target.value=''});
+  function csvCell(v){return `"${String(v??'').replace(/"/g,'""')}"`}
+  $('csvBtn').addEventListener('click',()=>{const h=['Lembrete','Data','Dia da semana','Hora','Prioridade','Status'];const r=items.map(i=>[i.text,i.due,weekDay(i.due),i.dueTime,i.priority,i.status==='done'?'Concluído':'Aberto']);download(`lembretes_${localDateISO()}.csv`,'\ufeff'+[h,...r].map(x=>x.map(csvCell).join(';')).join('\r\n'),'text/csv;charset=utf-8')});
+  $('printBtn').addEventListener('click',()=>{buildPrintPages();window.print()});
+
+  $('screenDate').textContent=todayLabel();$('boardDate').textContent=todayLabel();$('newDate').value=localDateISO();
+  load();render();
+})();
+</script>
+</body>
+</html>
