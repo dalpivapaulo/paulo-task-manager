@@ -2,6 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>PAULO | Lembretes</title>
@@ -33,6 +36,7 @@ button{cursor:pointer}
 }
 .brand h1{margin:0;font-size:31px;letter-spacing:-.02em}
 .brand .motto{margin-top:3px;font-family:Georgia,serif;font-style:italic;font-size:18px;color:#31363d}
+.version-badge{display:inline-flex;align-items:center;margin-left:8px;padding:4px 8px;border:1px solid #d5d9df;border-radius:999px;background:#f8f9fb;color:#697386;font-size:10px;font-weight:800;vertical-align:middle}
 .print-date-chip{font-size:13px;color:#394150;background:#e7e8ea;border-radius:999px;padding:9px 14px;white-space:nowrap}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
 button,.file-label{
@@ -131,7 +135,8 @@ dialog textarea{min-height:120px;padding-right:11px}
   .topbar{display:block}
   .brand h1{font-size:25px}
   .brand .motto{font-size:15px}
-  .print-date-chip{display:inline-block;margin-top:8px}
+  .version-badge{display:inline-flex;align-items:center;margin-left:8px;padding:4px 8px;border:1px solid #d5d9df;border-radius:999px;background:#f8f9fb;color:#697386;font-size:10px;font-weight:800;vertical-align:middle}
+.print-date-chip{display:inline-block;margin-top:8px}
   .toolbar{display:grid;grid-template-columns:1fr 1fr}
   .entry-grid{display:block}
   .field{margin-bottom:10px}
@@ -161,6 +166,7 @@ dialog textarea{min-height:120px;padding-right:11px}
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   body{background:#fff!important}
+  .version-badge{display:none!important}
   .app{display:none!important}
   #printStage{display:block!important}
   .print-page{width:196mm;min-height:283mm;margin:0 auto;page-break-after:always;padding:0 1mm;font-family:Arial,sans-serif;color:#111}
@@ -208,7 +214,7 @@ dialog textarea{min-height:120px;padding-right:11px}
   <div class="topbar">
     <div class="brand">
       <h1>PAULO | Lembretes</h1>
-      <div class="motto">Pequenas ações, grandes resultados.</div>
+      <div class="motto">Pequenas ações, grandes resultados. <span class="version-badge">v7.0 · 3 blocos</span></div>
     </div>
     <div class="print-date-chip" id="screenDate"></div>
   </div>
@@ -507,7 +513,7 @@ dialog textarea{min-height:120px;padding-right:11px}
   $('newMic').addEventListener('click',dictate);
 
   function download(name,content,type){const b=new Blob([content],{type});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),500)}
-  $('backupBtn').addEventListener('click',()=>download(`backup_lembretes_${localDateISO()}.json`,JSON.stringify({version:6,exportedAt:nowISO(),items},null,2),'application/json'));
+  $('backupBtn').addEventListener('click',()=>download(`backup_lembretes_${localDateISO()}.json`,JSON.stringify({version:7,exportedAt:nowISO(),items},null,2),'application/json'));
   $('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());const incoming=Array.isArray(o)?o:o.items;if(!Array.isArray(incoming))throw 0;if(items.length&&!confirm('Importar substituirá os lembretes atuais. Continuar?')){e.target.value='';return}items=incoming.map(normalize).filter(x=>x.text);save();render();toast('Backup importado.')}catch(err){alert('Backup inválido.')}e.target.value=''});
   function csvCell(v){return `"${String(v??'').replace(/"/g,'""')}"`}
   $('csvBtn').addEventListener('click',()=>{const h=['Lembrete','Data','Dia da semana','Hora','Prioridade','Status'];const r=items.map(i=>[i.text,i.due,weekDay(i.due),i.dueTime,i.priority,i.status==='done'?'Concluído':'Aberto']);download(`lembretes_${localDateISO()}.csv`,'\ufeff'+[h,...r].map(x=>x.map(csvCell).join(';')).join('\r\n'),'text/csv;charset=utf-8')});
