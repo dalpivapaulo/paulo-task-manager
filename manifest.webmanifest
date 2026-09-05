@@ -1,0 +1,26 @@
+{
+  "name": "PAULO | Gestor de Tarefas",
+  "short_name": "PAULO Tarefas",
+  "description": "Gestor pessoal de lembretes e tarefas com visão de atrasados, hoje e futuros.",
+  "lang": "pt-BR",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f5f3",
+  "theme_color": "#166534",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
