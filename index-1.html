@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor Local de Pendências</title>
+<style>
+:root{
+  --bg:#f3f5f7;
+  --panel:#ffffff;
+  --text:#17212b;
+  --muted:#667085;
+  --line:#d9dee5;
+  --accent:#166534;
+  --accent2:#15803d;
+  --danger:#b42318;
+  --warning:#b54708;
+  --info:#175cd3;
+  --shadow:0 8px 24px rgba(16,24,40,.08);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.app{
+  max-width:1480px;
+  margin:0 auto;
+  padding:20px;
+}
+header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+  margin-bottom:18px;
+}
+h1{
+  margin:0 0 6px;
+  font-size:28px;
+}
+.subtitle{
+  color:var(--muted);
+  font-size:14px;
+}
+.toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:flex-end;
+}
+button,.file-label{
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  padding:10px 13px;
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:600;
+  font-size:14px;
+}
+button:hover,.file-label:hover{background:#f8fafc}
+button.primary{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+}
+button.primary:hover{background:var(--accent2)}
+button.danger{color:var(--danger)}
+button.small{padding:6px 9px;font-size:12px;border-radius:7px}
+input[type=file]{display:none}
+
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(120px,1fr));
+  gap:10px;
+  margin-bottom:18px;
+}
+.metric{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+}
+.metric span{
+  color:var(--muted);
+  font-size:12px;
+  display:block;
+  margin-bottom:6px;
+}
+.metric strong{font-size:24px}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  margin-bottom:18px;
+  overflow:hidden;
+}
+.panel-head{
+  padding:15px 16px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.panel-head h2{font-size:17px;margin:0}
+.panel-head p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.table-wrap{overflow-x:auto}
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:980px;
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid #eef1f4;
+  vertical-align:top;
+}
+th{
+  text-align:left;
+  font-size:12px;
+  color:var(--muted);
+  background:#fafbfc;
+}
+.quick-note{
+  width:100%;
+  min-height:54px;
+  resize:vertical;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:9px;
+  font:inherit;
+  font-size:14px;
+}
+input[type=date], select, input[type=text]{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:9px;
+  font:inherit;
+  background:#fff;
+}
+.mic{
+  min-width:46px;
+  font-size:18px;
+  padding:9px;
+}
+.mic.listening{
+  background:#fee4e2;
+  border-color:#f04438;
+  animation:pulse 1s infinite;
+}
+@keyframes pulse{50%{transform:scale(1.04)}}
+.row-add{min-width:88px}
+
+.filters{
+  display:grid;
+  grid-template-columns:2fr repeat(3,1fr);
+  gap:10px;
+  padding:14px 16px;
+}
+.kanban{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding:14px;
+}
+.column{
+  min-height:140px;
+  background:#f7f8fa;
+  border:1px solid #e5e9ef;
+  border-radius:12px;
+  padding:12px;
+}
+.column[hidden]{display:none!important}
+.column h3{
+  font-size:15px;
+  margin:0 0 10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.column[data-col="late"]{
+  border-left:5px solid #d92d20;
+  background:#fff7f6;
+}
+.column[data-col="today"]{
+  border-left:5px solid #f79009;
+  background:#fffbf2;
+}
+.column[data-col="next"]{
+  border-left:5px solid #175cd3;
+  background:#f5f8ff;
+}
+.board-cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:10px;
+}
+.board-cards .card{margin-bottom:0}
+.archive-wrap{
+  padding:0 14px 14px;
+}
+.archive{
+  border-top:1px solid var(--line);
+  padding-top:12px;
+}
+.archive summary{
+  cursor:pointer;
+  font-weight:700;
+  color:#475467;
+  padding:8px 0;
+}
+.archive .board-cards{margin-top:8px}
+
+.count{
+  background:#e9edf2;
+  padding:3px 7px;
+  border-radius:999px;
+  font-size:11px;
+}
+.card{
+  background:#fff;
+  border:1px solid #dfe4ea;
+  border-left:4px solid #98a2b3;
+  border-radius:10px;
+  padding:11px;
+  margin-bottom:9px;
+  box-shadow:0 2px 8px rgba(16,24,40,.05);
+}
+.card.high{border-left-color:#d92d20}
+.card.medium{border-left-color:#f79009}
+.card.low{border-left-color:#12b76a}
+.card.done{opacity:.75}
+.card-title{
+  font-weight:700;
+  line-height:1.35;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.card-meta{
+  margin-top:9px;
+  font-size:12px;
+  color:var(--muted);
+  display:grid;
+  gap:4px;
+}
+.card-actions{
+  margin-top:10px;
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.empty{
+  color:#98a2b3;
+  font-size:12px;
+  text-align:center;
+  padding:24px 8px;
+}
+.notice{
+  padding:10px 14px;
+  background:#fffaeb;
+  color:#7a2e0e;
+  border-top:1px solid #fedf89;
+  font-size:12px;
+}
+#toast{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  background:#101828;
+  color:#fff;
+  padding:11px 14px;
+  border-radius:9px;
+  opacity:0;
+  pointer-events:none;
+  transition:.2s;
+  z-index:50;
+}
+#toast.show{opacity:1}
+dialog{
+  border:none;
+  border-radius:14px;
+  width:min(620px,calc(100% - 28px));
+  box-shadow:0 20px 60px rgba(16,24,40,.25);
+}
+dialog::backdrop{background:rgba(16,24,40,.45)}
+.dialog-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dialog-grid .full{grid-column:1/-1}
+dialog label{font-size:12px;font-weight:700;color:#475467;display:block;margin-bottom:5px}
+dialog textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+@media(max-width:900px){
+  .metrics{grid-template-columns:repeat(3,1fr)}
+  header{flex-direction:column}
+  .toolbar{justify-content:flex-start}
+  .filters{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .app{padding:12px}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .filters{grid-template-columns:1fr}
+  h1{font-size:22px}
+}
+@media print{
+  body{background:#fff}
+  .toolbar,.quick-entry,.filters,.card-actions,.notice{display:none!important}
+  .app{max-width:none;padding:0}
+  .panel{box-shadow:none;border:none}
+  .kanban{display:block;padding:0}
+  .column{page-break-inside:avoid;margin-bottom:14px;background:#fff!important;border:1px solid #ccc}
+  .board-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .card{page-break-inside:avoid;margin:0}
+  .archive-wrap{display:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Gestor Local de Pendências</h1>
+      <div class="subtitle">Digite ou dite suas notas, defina prazo e acompanhe tudo em um quadro visual.</div>
+    </div>
+    <div class="toolbar">
+      <button id="backupBtn">Exportar backup</button>
+      <label class="file-label" for="importFile">Importar backup</label>
+      <input id="importFile" type="file" accept=".json,application/json">
+      <button id="csvBtn">Exportar CSV</button>
+      <button id="printBtn">Imprimir / PDF</button>
+    </div>
+  </header>
+
+  <section class="metrics">
+    <div class="metric"><span>Total abertas</span><strong id="mOpen">0</strong></div>
+    <div class="metric"><span>Atrasadas</span><strong id="mLate">0</strong></div>
+    <div class="metric"><span>Para hoje</span><strong id="mToday">0</strong></div>
+    <div class="metric"><span>Futuras</span><strong id="mNext">0</strong></div>
+    <div class="metric"><span>Sem prazo</span><strong id="mNoDate">0</strong></div>
+    <div class="metric"><span>Concluídas</span><strong id="mDone">0</strong></div>
+  </section>
+
+  <section class="panel quick-entry">
+    <div class="panel-head">
+      <div>
+        <h2>Entrada rápida</h2>
+        <p>Preencha quantas linhas quiser. O microfone escreve diretamente na linha escolhida.</p>
+      </div>
+      <button id="addRowsBtn">+ 5 linhas</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:46%">Nota / atividade</th>
+            <th style="width:14%">Prazo</th>
+            <th style="width:13%">Prioridade</th>
+            <th style="width:16%">Categoria</th>
+            <th style="width:5%">Voz</th>
+            <th style="width:6%">Salvar</th>
+          </tr>
+        </thead>
+        <tbody id="quickRows"></tbody>
+      </table>
+    </div>
+    <div class="notice" id="voiceNotice">
+      Ditado: será ativado se o navegador disponibilizar reconhecimento de fala. Ao usar pela primeira vez, autorize o microfone.
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Quadro de pendências</h2>
+        <p>Ordem vertical: atrasados no topo, hoje no centro e futuros abaixo. Se não houver atrasados, hoje assume automaticamente a primeira posição.</p>
+      </div>
+    </div>
+    <div class="filters">
+      <input id="search" type="text" placeholder="Pesquisar nota ou categoria...">
+      <select id="filterPriority">
+        <option value="">Todas as prioridades</option>
+        <option value="Alta">Alta</option>
+        <option value="Média">Média</option>
+        <option value="Baixa">Baixa</option>
+      </select>
+      <select id="filterCategory">
+        <option value="">Todas as categorias</option>
+      </select>
+      <select id="filterStatus">
+        <option value="">Abertas e concluídas</option>
+        <option value="open">Somente abertas</option>
+        <option value="done">Somente concluídas</option>
+      </select>
+    </div>
+
+    <div class="kanban">
+      <div class="column" data-col="late" id="boardLate">
+        <h3>1. Atrasados <span class="count" id="cLate">0</span></h3>
+        <div id="colLate" class="board-cards"></div>
+      </div>
+
+      <div class="column" data-col="today" id="boardToday">
+        <h3>2. Para hoje <span class="count" id="cToday">0</span></h3>
+        <div id="colToday" class="board-cards"></div>
+      </div>
+
+      <div class="column" data-col="next" id="boardNext">
+        <h3>3. Futuros <span class="count" id="cNext">0</span></h3>
+        <div id="colNext" class="board-cards"></div>
+      </div>
+    </div>
+
+    <div class="archive-wrap">
+      <details class="archive">
+        <summary>Histórico de concluídas (<span id="cDone">0</span>)</summary>
+        <div id="colDone" class="board-cards"></div>
+      </details>
+    </div>
+  </section>
+</div>
+
+<dialog id="editDialog">
+  <form method="dialog" id="editForm">
+    <h2 style="margin-top:0">Editar pendência</h2>
+    <input type="hidden" id="editId">
+    <div class="dialog-grid">
+      <div class="full">
+        <label for="editText">Nota / atividade</label>
+        <textarea id="editText" required></textarea>
+      </div>
+      <div>
+        <label for="editDate">Prazo</label>
+        <input id="editDate" type="date">
+      </div>
+      <div>
+        <label for="editPriority">Prioridade</label>
+        <select id="editPriority">
+          <option>Alta</option>
+          <option>Média</option>
+          <option>Baixa</option>
+        </select>
+      </div>
+      <div>
+        <label for="editCategory">Categoria</label>
+        <input id="editCategory" type="text">
+      </div>
+      <div>
+        <label for="editStatus">Status</label>
+        <select id="editStatus">
+          <option value="open">Aberta</option>
+          <option value="done">Concluída</option>
+        </select>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="cancelEdit">Cancelar</button>
+      <button class="primary" type="submit">Salvar alterações</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'gestor_pendencias_local_v1';
+  let items = [];
+  let storageOK = true;
+  const $ = id => document.getElementById(id);
+
+  function localDateISO(){
+    const d = new Date();
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function fmtDate(iso){
+    if(!iso) return 'Sem prazo';
+    const [y,m,d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  function nowISO(){ return new Date().toISOString(); }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+  function esc(s){
+    return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  }
+  function toast(msg){
+    const t=$('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(toast.timer); toast.timer=setTimeout(()=>t.classList.remove('show'),2200);
+  }
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      storageOK = true;
+    }catch(e){
+      storageOK = false;
+      $('voiceNotice').innerHTML = '<strong>Atenção:</strong> este navegador bloqueou o armazenamento local para este arquivo. Use “Exportar backup” para preservar os dados.';
+    }
+  }
+  function load(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      if(raw) items=JSON.parse(raw);
+      if(!Array.isArray(items)) items=[];
+    }catch(e){
+      items=[];
+      storageOK=false;
+    }
+  }
+
+  const tbody=$('quickRows');
+  function makeRow(){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><textarea class="quick-note" placeholder="Digite ou toque no microfone e fale..."></textarea></td>
+      <td><input class="q-date" type="date"></td>
+      <td>
+        <select class="q-priority">
+          <option>Alta</option>
+          <option selected>Média</option>
+          <option>Baixa</option>
+        </select>
+      </td>
+      <td><input class="q-category" type="text" placeholder="Ex.: Comercial"></td>
+      <td><button type="button" class="mic" title="Ditar esta nota">🎙️</button></td>
+      <td><button type="button" class="primary row-add">Adicionar</button></td>`;
+    tbody.appendChild(tr);
+    const note=tr.querySelector('.quick-note');
+    tr.querySelector('.row-add').addEventListener('click',()=>addFromRow(tr));
+    tr.querySelector('.mic').addEventListener('click',e=>dictate(note,e.currentTarget));
+    note.addEventListener('keydown',e=>{
+      if(e.ctrlKey && e.key==='Enter'){ e.preventDefault(); addFromRow(tr); }
+    });
+  }
+  function addRows(n){ for(let i=0;i<n;i++) makeRow(); }
+  function addFromRow(tr){
+    const text=tr.querySelector('.quick-note').value.trim();
+    if(!text){ toast('Digite ou dite uma nota antes de adicionar.'); return; }
+    items.unshift({
+      id:uid(),
+      text,
+      due:tr.querySelector('.q-date').value || '',
+      priority:tr.querySelector('.q-priority').value,
+      category:tr.querySelector('.q-category').value.trim() || 'Geral',
+      status:'open',
+      createdAt:nowISO(),
+      completedAt:''
+    });
+    save();
+    tr.querySelector('.quick-note').value='';
+    tr.querySelector('.q-date').value='';
+    tr.querySelector('.q-priority').value='Média';
+    tr.querySelector('.q-category').value='';
+    render();
+    toast('Pendência adicionada.');
+  }
+  $('addRowsBtn').addEventListener('click',()=>addRows(5));
+
+  let recognition=null;
+  let activeMic=null;
+  function dictate(target,button){
+    const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){
+      toast('Reconhecimento de voz não disponível neste navegador.');
+      return;
+    }
+    if(recognition){
+      try{ recognition.stop(); }catch(e){}
+      recognition=null;
+      if(activeMic) activeMic.classList.remove('listening');
+    }
+    recognition=new SR();
+    recognition.lang='pt-BR';
+    recognition.interimResults=true;
+    recognition.continuous=false;
+    let finalText='';
+    const original=target.value.trim();
+    activeMic=button;
+    button.classList.add('listening');
+    button.textContent='⏹️';
+
+    recognition.onresult=function(event){
+      let interim='';
+      finalText='';
+      for(let i=0;i<event.results.length;i++){
+        const txt=event.results[i][0].transcript;
+        if(event.results[i].isFinal) finalText+=txt;
+        else interim+=txt;
+      }
+      const combined=[original, finalText || interim].filter(Boolean).join(original ? ' ' : '');
+      target.value=combined;
+    };
+    recognition.onerror=function(event){
+      const map={
+        'not-allowed':'Permissão do microfone negada.',
+        'service-not-allowed':'Serviço de reconhecimento bloqueado.',
+        'network':'Falha de rede no reconhecimento de voz.',
+        'no-speech':'Nenhuma fala foi detectada.'
+      };
+      toast(map[event.error] || 'Não foi possível reconhecer a fala.');
+    };
+    recognition.onend=function(){
+      button.classList.remove('listening');
+      button.textContent='🎙️';
+      recognition=null;
+      activeMic=null;
+    };
+    try{ recognition.start(); }
+    catch(e){ toast('Não foi possível iniciar o microfone.'); }
+  }
+
+  function bucket(item){
+    if(item.status==='done') return 'done';
+    if(!item.due) return 'nodate';
+    const today=localDateISO();
+    if(item.due<today) return 'late';
+    if(item.due===today) return 'today';
+    return 'next';
+  }
+  function priorityClass(p){
+    if(p==='Alta') return 'high';
+    if(p==='Média') return 'medium';
+    return 'low';
+  }
+  function filteredItems(){
+    const q=$('search').value.trim().toLowerCase();
+    const pr=$('filterPriority').value;
+    const cat=$('filterCategory').value;
+    const st=$('filterStatus').value;
+    return items.filter(i=>{
+      const text=(i.text+' '+i.category).toLowerCase();
+      if(q && !text.includes(q)) return false;
+      if(pr && i.priority!==pr) return false;
+      if(cat && i.category!==cat) return false;
+      if(st && i.status!==st) return false;
+      return true;
+    });
+  }
+  function renderCategories(){
+    const selected=$('filterCategory').value;
+    const cats=[...new Set(items.map(i=>i.category||'Geral'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    $('filterCategory').innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option ${c===selected?'selected':''}>${esc(c)}</option>`).join('');
+  }
+  function cardHTML(i){
+    return `<article class="card ${priorityClass(i.priority)} ${i.status==='done'?'done':''}" data-id="${esc(i.id)}">
+      <div class="card-title">${esc(i.text)}</div>
+      <div class="card-meta">
+        <div><strong>Prazo:</strong> ${fmtDate(i.due)}${!i.due ? ' · <strong>Sem prazo definido</strong>' : ''}</div>
+        <div><strong>Prioridade:</strong> ${esc(i.priority)} · <strong>Categoria:</strong> ${esc(i.category)}</div>
+        ${i.status==='done' && i.completedAt ? `<div><strong>Concluída:</strong> ${new Date(i.completedAt).toLocaleString('pt-BR')}</div>`:''}
+      </div>
+      <div class="card-actions">
+        <button type="button" class="small edit-btn">Editar</button>
+        <button type="button" class="small done-btn">${i.status==='done'?'Reabrir':'Concluir'}</button>
+        <button type="button" class="small danger del-btn">Excluir</button>
+      </div>
+    </article>`;
+  }
+  function render(){
+    renderCategories();
+    const f=filteredItems();
+    const groups={late:[],today:[],next:[],done:[]};
+    f.forEach(i=>{
+      const b=bucket(i);
+      if(b==='nodate') groups.next.push(i);
+      else groups[b].push(i);
+    });
+    ['late','today','next','done'].forEach(k=>{
+      groups[k].sort((a,b)=>{
+        if(a.due && b.due && a.due!==b.due) return a.due.localeCompare(b.due);
+        if(a.due && !b.due) return -1;
+        if(!a.due && b.due) return 1;
+        const rank={'Alta':0,'Média':1,'Baixa':2};
+        return (rank[a.priority]??9)-(rank[b.priority]??9);
+      });
+    });
+    const targets={late:'colLate',today:'colToday',next:'colNext',done:'colDone'};
+    const counts={late:'cLate',today:'cToday',next:'cNext',done:'cDone'};
+    Object.keys(groups).forEach(k=>{
+      $(targets[k]).innerHTML=groups[k].length?groups[k].map(cardHTML).join(''):'<div class="empty">Nenhuma pendência</div>';
+      $(counts[k]).textContent=groups[k].length;
+    });
+
+    // Regra do quadro: se não houver atrasados, "Hoje" assume automaticamente o topo.
+    $('boardLate').hidden = groups.late.length===0;
+
+    const allGroups={late:0,today:0,next:0,nodate:0,done:0};
+    items.forEach(i=>allGroups[bucket(i)]++);
+    $('mOpen').textContent=items.filter(i=>i.status==='open').length;
+    $('mLate').textContent=allGroups.late;
+    $('mToday').textContent=allGroups.today;
+    $('mNext').textContent=allGroups.next;
+    $('mNoDate').textContent=allGroups.nodate;
+    $('mDone').textContent=allGroups.done;
+
+    document.querySelectorAll('.card').forEach(card=>{
+      const id=card.dataset.id;
+      card.querySelector('.edit-btn').addEventListener('click',()=>openEdit(id));
+      card.querySelector('.done-btn').addEventListener('click',()=>toggleDone(id));
+      card.querySelector('.del-btn').addEventListener('click',()=>removeItem(id));
+    });
+  }
+
+  function toggleDone(id){
+    const i=items.find(x=>x.id===id); if(!i) return;
+    if(i.status==='done'){i.status='open';i.completedAt='';}
+    else{i.status='done';i.completedAt=nowISO();}
+    save();render();
+  }
+  function removeItem(id){
+    const i=items.find(x=>x.id===id); if(!i) return;
+    if(!confirm('Excluir esta pendência?')) return;
+    items=items.filter(x=>x.id!==id);
+    save();render();
+  }
+
+  const dialog=$('editDialog');
+  function openEdit(id){
+    const i=items.find(x=>x.id===id); if(!i) return;
+    $('editId').value=i.id;
+    $('editText').value=i.text;
+    $('editDate').value=i.due;
+    $('editPriority').value=i.priority;
+    $('editCategory').value=i.category;
+    $('editStatus').value=i.status;
+    dialog.showModal();
+  }
+  $('cancelEdit').addEventListener('click',()=>dialog.close());
+  $('editForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const i=items.find(x=>x.id===$('editId').value); if(!i) return;
+    const text=$('editText').value.trim();
+    if(!text){toast('A nota não pode ficar vazia.');return;}
+    const oldStatus=i.status;
+    i.text=text;
+    i.due=$('editDate').value;
+    i.priority=$('editPriority').value;
+    i.category=$('editCategory').value.trim()||'Geral';
+    i.status=$('editStatus').value;
+    if(oldStatus!=='done' && i.status==='done') i.completedAt=nowISO();
+    if(i.status!=='done') i.completedAt='';
+    save();dialog.close();render();toast('Pendência atualizada.');
+  });
+
+  ['search','filterPriority','filterCategory','filterStatus'].forEach(id=>{
+    $(id).addEventListener(id==='search'?'input':'change',render);
+  });
+
+  function download(filename,content,type){
+    const blob=new Blob([content],{type});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),500);
+  }
+  $('backupBtn').addEventListener('click',()=>{
+    const payload={version:1,exportedAt:nowISO(),items};
+    download(`backup_pendencias_${localDateISO()}.json`,JSON.stringify(payload,null,2),'application/json');
+  });
+  $('importFile').addEventListener('change',async e=>{
+    const file=e.target.files[0]; if(!file) return;
+    try{
+      const obj=JSON.parse(await file.text());
+      const incoming=Array.isArray(obj)?obj:obj.items;
+      if(!Array.isArray(incoming)) throw new Error('Formato inválido');
+      if(items.length && !confirm('Importar o backup substituirá os dados atuais. Continuar?')){e.target.value='';return;}
+      items=incoming.map(x=>({
+        id:x.id||uid(),
+        text:String(x.text||''),
+        due:/^\d{4}-\d{2}-\d{2}$/.test(x.due||'')?x.due:'',
+        priority:['Alta','Média','Baixa'].includes(x.priority)?x.priority:'Média',
+        category:String(x.category||'Geral'),
+        status:x.status==='done'?'done':'open',
+        createdAt:x.createdAt||nowISO(),
+        completedAt:x.completedAt||''
+      })).filter(x=>x.text.trim());
+      save();render();toast('Backup importado.');
+    }catch(err){alert('Não foi possível importar este arquivo. Verifique se é um backup válido.');}
+    e.target.value='';
+  });
+
+  function csvCell(v){
+    const s=String(v??'').replace(/"/g,'""');
+    return `"${s}"`;
+  }
+  $('csvBtn').addEventListener('click',()=>{
+    const header=['Nota','Prazo','Prioridade','Categoria','Status','Criada em','Concluída em'];
+    const rows=items.map(i=>[
+      i.text,i.due,i.priority,i.category,i.status==='done'?'Concluída':'Aberta',
+      i.createdAt,i.completedAt
+    ]);
+    const csv='\ufeff'+[header,...rows].map(r=>r.map(csvCell).join(';')).join('\r\n');
+    download(`pendencias_${localDateISO()}.csv`,csv,'text/csv;charset=utf-8');
+  });
+  $('printBtn').addEventListener('click',()=>window.print());
+
+  load();
+  addRows(8);
+  render();
+
+  const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    $('voiceNotice').innerHTML='<strong>Ditado indisponível neste navegador.</strong> A digitação continua funcionando normalmente. Para usar voz, abra o arquivo em um navegador compatível com Web Speech API, como versões compatíveis de Chrome/Edge.';
+  }
+})();
+</script>
+</body>
+</html>
